@@ -13,7 +13,8 @@ import {
 import { MyDocument } from "./PDF";
 import { usePDF } from "@react-pdf/renderer";
 import { lettingaFees, nonLettingaFees, tuitionCosts } from "./values";
-import { AcademicTerms, AidYear, DocumentProps } from "./types";
+import {AcademicTerms, AidYear, Class, DocumentProps, Fee} from "./types";
+import {calculateCengage, classFees} from "./fees.ts";
 
 const academicTermOptions = Object.values(AcademicTerms).map((term) => ({
   value: term,
@@ -24,6 +25,51 @@ const aidYearOptions = Object.values(AidYear).map((term) => ({
   value: term,
   label: term,
 }));
+
+const addCourseFees = (courses: Array<Class>, fees: Array<Fee>) => {
+  const feesToAdd: Array<Fee> = [];
+  for (const course of courses) {
+    const courseFee = classFees[course.id as keyof typeof classFees];
+    if (courseFee) {
+      if(fees.some(fee => fee.name === course.id)) {
+        continue;
+      }
+      feesToAdd.push({
+          name: course.id,
+          cost: courseFee,
+          isCourseFee: true,
+      });
+    }
+  }
+
+  const combinedFees = fees.concat(feesToAdd);
+  const deduplication = combinedFees.filter((fee, index, self) =>
+    index === self.findIndex((t) => t.name === fee.name)
+  );
+  const removeFeeIfClassIsRemoved = deduplication.filter((fee) => {
+    if (fee.isCourseFee) {
+      return courses.some((course) => course.id === fee.name);
+    }
+    return true;
+  });
+  const updateCengage = calculateCengage(courses.map(course => course.id));
+  const cengageFee = removeFeeIfClassIsRemoved.find(fee => fee.name === "Cengage");
+  if (cengageFee) {
+    if(updateCengage !== 0)
+      cengageFee.cost = updateCengage;
+    else
+        removeFeeIfClassIsRemoved.splice(removeFeeIfClassIsRemoved.indexOf(cengageFee), 1);
+  } else {
+    if(updateCengage !== 0)
+      removeFeeIfClassIsRemoved.push({
+          name: "Cengage",
+          cost: updateCengage,
+          isCourseFee: true,
+      });
+  }
+
+  return removeFeeIfClassIsRemoved;
+}
 
 export const DocumentForm: React.FC = () => {
   const [form] = Form.useForm<DocumentProps>();
@@ -92,6 +138,7 @@ export const DocumentForm: React.FC = () => {
         }
       }
     }
+    form.setFieldValue("fees", addCourseFees(form.getFieldValue("classes"), form.getFieldValue("fees")))
     updateInstance(<MyDocument {...form.getFieldsValue()} />);
   };
 
@@ -298,6 +345,7 @@ export const DocumentForm: React.FC = () => {
                       {...restField}
                       name={[name, "isCourseFee"]}
                       label="Is Course Fee"
+                      valuePropName={"checked"}
                     >
                       <Checkbox />
                     </Form.Item>
