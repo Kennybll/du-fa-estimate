@@ -121,7 +121,7 @@ export const DocumentForm: React.FC = () => {
             {tuitionCosts.undergrad} (undergrad)
           </Button>
           <Button onClick={() => setTuition(tuitionCosts.grad)}>
-            {tuitionCosts.undergrad} (grad)
+            {tuitionCosts.grad} (grad)
           </Button>
           <Button onClick={() => setTuition(tuitionCosts.nursing)}>
             {tuitionCosts.nursing} (nursing)
