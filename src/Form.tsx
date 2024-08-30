@@ -103,6 +103,7 @@ export const DocumentForm: React.FC = () => {
       fees.push(...nonLettingaFees);
     }
     form.setFieldValue("fees", fees);
+    updateInstance(<MyDocument {...form.getFieldsValue()} />);
   };
 
   return (
