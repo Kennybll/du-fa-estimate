@@ -9,8 +9,6 @@ import {
   InputNumber,
   Space,
   Select,
-  Row,
-  Col,
 } from "antd";
 import { MyDocument } from "./PDF";
 import { usePDF } from "@react-pdf/renderer";
