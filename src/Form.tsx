@@ -13,8 +13,8 @@ import {
 import { MyDocument } from "./PDF";
 import { usePDF } from "@react-pdf/renderer";
 import { lettingaFees, nonLettingaFees, tuitionCosts } from "./values";
-import {AcademicTerms, AidYear, Class, DocumentProps, Fee} from "./types";
-import {calculateCengage, classFees} from "./fees.ts";
+import { AcademicTerms, AidYear, Class, DocumentProps, Fee } from "./types";
+import { calculateCengage, classFees } from "./fees.ts";
 
 const academicTermOptions = Object.values(AcademicTerms).map((term) => ({
   value: term,
@@ -31,45 +31,50 @@ const addCourseFees = (courses: Array<Class>, fees: Array<Fee>) => {
   for (const course of courses) {
     const courseFee = classFees[course.id as keyof typeof classFees];
     if (courseFee) {
-      if(fees.some(fee => fee.name === course.id)) {
+      if (fees.some((fee) => fee.name === course.id)) {
         continue;
       }
       feesToAdd.push({
-          name: course.id,
-          cost: courseFee,
-          isCourseFee: true,
+        name: course.id,
+        cost: courseFee,
+        isCourseFee: true,
       });
     }
   }
 
   const combinedFees = fees.concat(feesToAdd);
-  const deduplication = combinedFees.filter((fee, index, self) =>
-    index === self.findIndex((t) => t.name === fee.name)
+  console.log(combinedFees);
+  const deduplication = combinedFees.filter(
+    (fee, index, self) =>
+      fee.name === "" || index === self.findIndex((t) => t.name === fee.name)
   );
-  const removeFeeIfClassIsRemoved = deduplication.filter((fee) => {
-    if (fee.isCourseFee) {
+  let removeFeeIfClassIsRemoved = deduplication.filter((fee) => {
+    if (fee.isCourseFee && !fee?.manual) {
       return courses.some((course) => course.id === fee.name);
     }
     return true;
   });
-  const updateCengage = calculateCengage(courses.map(course => course.id));
-  const cengageFee = removeFeeIfClassIsRemoved.find(fee => fee.name === "Cengage");
+  const updateCengage = calculateCengage(courses.map((course) => course.id));
+  const cengageFee = removeFeeIfClassIsRemoved.find(
+    (fee) => fee.name === "Cengage"
+  );
   if (cengageFee) {
-    if(updateCengage !== 0)
-      cengageFee.cost = updateCengage;
+    if (updateCengage !== 0) cengageFee.cost = updateCengage;
     else
-        removeFeeIfClassIsRemoved.splice(removeFeeIfClassIsRemoved.indexOf(cengageFee), 1);
+      removeFeeIfClassIsRemoved = removeFeeIfClassIsRemoved.filter(
+        (f) => f.name !== "Cengage"
+      );
   } else {
-    if(updateCengage !== 0)
+    if (updateCengage !== 0)
       removeFeeIfClassIsRemoved.push({
-          name: "Cengage",
-          cost: updateCengage,
-          isCourseFee: true,
+        name: "Cengage",
+        cost: updateCengage,
+        isCourseFee: true,
       });
   }
 
   return removeFeeIfClassIsRemoved;
-}
+};
 
 export const DocumentForm: React.FC = () => {
   const [form] = Form.useForm<DocumentProps>();
@@ -138,7 +143,10 @@ export const DocumentForm: React.FC = () => {
         }
       }
     }
-    form.setFieldValue("fees", addCourseFees(form.getFieldValue("classes"), form.getFieldValue("fees")))
+    form.setFieldValue(
+      "fees",
+      addCourseFees(form.getFieldValue("classes"), form.getFieldValue("fees"))
+    );
     updateInstance(<MyDocument {...form.getFieldsValue()} />);
   };
 
@@ -346,16 +354,28 @@ export const DocumentForm: React.FC = () => {
                       name={[name, "isCourseFee"]}
                       label="Is Course Fee"
                       valuePropName={"checked"}
+                      fieldId={key.toString()}
+                      key={key}
                     >
                       <Checkbox />
                     </Form.Item>
-                    <MinusCircleOutlined onClick={() => remove(name)} />
+                    <MinusCircleOutlined
+                      style={{ marginLeft: 10 }}
+                      onClick={() => remove(name)}
+                    />
                   </Space>
                 ))}
                 <Form.Item>
                   <Button
                     type="dashed"
-                    onClick={() => add()}
+                    onClick={() =>
+                      add({
+                        name: "",
+                        cost: 0,
+                        isCourseFee: false,
+                        manual: true,
+                      })
+                    }
                     block
                     icon={<PlusOutlined />}
                   >

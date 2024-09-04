@@ -107,8 +107,11 @@ export const MyDocument = ({
   aidYear,
   aid = [],
 }: DocumentProps) => {
+  classes = classes.filter((c) => c?.cost !== undefined);
+  fees = fees.filter((f) => f?.cost !== undefined);
+  aid = aid.filter((a) => a?.amount !== undefined);
   const estimatedTuition = currency(
-    classes.reduce((acc, cur) => acc + cur.cost * cur.creditHours, 0),
+    classes.reduce((acc, cur) => acc + cur.cost * cur.creditHours, 0)
   );
   const feesSum = currency(fees.reduce((acc, cur) => acc + cur.cost, 0));
   const aidSum = currency(aid.reduce((acc, cur) => acc + cur.amount, 0));

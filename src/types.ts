@@ -8,6 +8,7 @@ export type Fee = {
   name: string;
   cost: number;
   isCourseFee: boolean;
+  manual?: boolean;
 };
 
 export type Aid = {
