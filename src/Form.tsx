@@ -9,6 +9,7 @@ import {
   InputNumber,
   Space,
   Select,
+  FormInstance,
 } from "antd";
 import { MyDocument } from "./PDF";
 import { usePDF } from "@react-pdf/renderer";
@@ -76,8 +77,11 @@ const addCourseFees = (courses: Array<Class>, fees: Array<Fee>) => {
   return removeFeeIfClassIsRemoved;
 };
 
-export const DocumentForm: React.FC = () => {
-  const [form] = Form.useForm<DocumentProps>();
+type props = {
+  form: FormInstance<DocumentProps>;
+};
+
+export const DocumentForm: React.FC<props> = ({ form }) => {
   const [instance, updateInstance] = usePDF({
     document: <MyDocument {...form.getFieldsValue()} />,
   });
